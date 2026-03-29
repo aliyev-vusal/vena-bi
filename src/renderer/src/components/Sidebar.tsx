@@ -8,6 +8,7 @@ interface Field {
 
 interface SidebarProps {
   fields?: Field[]
+  width: number
 }
 
 const mockFields: Field[] = [
@@ -19,61 +20,54 @@ const mockFields: Field[] = [
   { name: 'Profit', type: 'measure', dataType: 'DOUBLE' }
 ]
 
-export function Sidebar({ fields = mockFields }: SidebarProps): React.JSX.Element {
+export function Sidebar({ fields = mockFields, width }: SidebarProps): React.JSX.Element {
   const dimensions = fields.filter((f) => f.type === 'dimension')
   const measures = fields.filter((f) => f.type === 'measure')
 
   return (
-    <aside className="w-64 bg-macos-sidebar border-r border-macos-border flex flex-col shrink-0 select-none">
-      {/* Traffic light spacer - macOS title bar area */}
+    <aside
+      style={{ width }}
+      className="shrink-0 bg-macos-sidebar flex flex-col select-none overflow-hidden"
+    >
+      {/* Traffic light spacer — macOS title bar area */}
       <div className="h-10 drag-region" />
 
       {/* Data source header */}
-      <div className="px-4 py-3 border-b border-macos-border">
-        <p className="text-xs font-semibold text-macos-text-secondary uppercase tracking-wider mb-2">
+      <div className="px-3 pb-3 border-b border-macos-border">
+        <p className="text-[10px] font-semibold text-macos-text-secondary uppercase tracking-widest mb-2 px-1">
           Data Source
         </p>
-        <button className="no-drag w-full flex items-center gap-2 px-3 py-2 rounded-macos-sm bg-macos-border hover:bg-opacity-80 text-macos-text text-sm transition-colors">
-          <svg
-            className="w-4 h-4 text-macos-accent"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
-            />
+        <button
+          className="no-drag w-full flex items-center gap-2 px-3 py-2 rounded-macos-sm bg-macos-border hover:bg-opacity-70 active:scale-[0.98] text-macos-text text-xs font-medium transition-all"
+          onClick={() => window.electron?.ipcRenderer.send('open-file')}
+        >
+          <svg className="w-3.5 h-3.5 text-macos-accent shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
           </svg>
-          Load File
+          <span className="truncate">Open CSV / Parquet…</span>
         </button>
       </div>
 
       {/* Fields list */}
-      <div className="flex-1 overflow-y-auto px-2 py-3">
-        {/* Dimensions */}
-        <div className="mb-4">
-          <p className="px-2 mb-1 text-xs font-semibold text-macos-text-secondary uppercase tracking-wider">
-            Dimensions
-          </p>
-          {dimensions.map((field) => (
-            <FieldItem key={field.name} field={field} />
-          ))}
-        </div>
-
-        {/* Measures */}
-        <div>
-          <p className="px-2 mb-1 text-xs font-semibold text-macos-text-secondary uppercase tracking-wider">
-            Measures
-          </p>
-          {measures.map((field) => (
-            <FieldItem key={field.name} field={field} />
-          ))}
-        </div>
+      <div className="flex-1 overflow-y-auto px-2 py-3 space-y-4">
+        <FieldGroup label="Dimensions" fields={dimensions} />
+        <FieldGroup label="Measures" fields={measures} />
       </div>
     </aside>
+  )
+}
+
+function FieldGroup({ label, fields }: { label: string; fields: Field[] }): React.JSX.Element {
+  if (fields.length === 0) return <></>
+  return (
+    <div>
+      <p className="px-2 mb-1 text-[10px] font-semibold text-macos-text-secondary uppercase tracking-widest">
+        {label}
+      </p>
+      {fields.map((field) => (
+        <FieldItem key={field.name} field={field} />
+      ))}
+    </div>
   )
 }
 
@@ -83,19 +77,28 @@ function FieldItem({ field }: { field: Field }): React.JSX.Element {
     e.dataTransfer.effectAllowed = 'copy'
   }
 
+  const isDimension = field.type === 'dimension'
+
   return (
     <div
       draggable
       onDragStart={handleDragStart}
-      className="no-drag flex items-center gap-2 px-2 py-1.5 rounded-macos-sm hover:bg-macos-border cursor-grab active:cursor-grabbing text-sm text-macos-text transition-colors group"
+      className="no-drag group flex items-center gap-2 px-2 py-1.5 rounded-macos-sm hover:bg-macos-border cursor-grab active:cursor-grabbing text-sm text-macos-text transition-colors"
     >
-      {field.type === 'dimension' ? (
-        <span className="text-blue-400 font-mono text-xs">D</span>
-      ) : (
-        <span className="text-green-400 font-mono text-xs">M</span>
-      )}
-      <span className="flex-1 truncate">{field.name}</span>
-      <span className="text-macos-text-secondary text-xs opacity-0 group-hover:opacity-100 transition-opacity">
+      {/* Type badge */}
+      <span
+        className={`w-4 h-4 rounded flex items-center justify-center text-[9px] font-bold shrink-0 ${
+          isDimension
+            ? 'bg-blue-500 bg-opacity-20 text-blue-400'
+            : 'bg-green-500 bg-opacity-20 text-green-400'
+        }`}
+      >
+        {isDimension ? 'D' : 'M'}
+      </span>
+
+      <span className="flex-1 truncate text-xs">{field.name}</span>
+
+      <span className="text-macos-text-secondary text-[10px] font-mono opacity-0 group-hover:opacity-60 transition-opacity shrink-0">
         {field.dataType}
       </span>
     </div>
