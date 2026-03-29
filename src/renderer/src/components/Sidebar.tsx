@@ -7,7 +7,7 @@ interface Field {
 }
 
 interface SidebarProps {
-  fields: Field[]
+  fields?: Field[]
 }
 
 const mockFields: Field[] = [
@@ -78,9 +78,15 @@ export function Sidebar({ fields = mockFields }: SidebarProps): React.JSX.Elemen
 }
 
 function FieldItem({ field }: { field: Field }): React.JSX.Element {
+  const handleDragStart = (e: React.DragEvent): void => {
+    e.dataTransfer.setData('text/plain', field.name)
+    e.dataTransfer.effectAllowed = 'copy'
+  }
+
   return (
     <div
       draggable
+      onDragStart={handleDragStart}
       className="no-drag flex items-center gap-2 px-2 py-1.5 rounded-macos-sm hover:bg-macos-border cursor-grab active:cursor-grabbing text-sm text-macos-text transition-colors group"
     >
       {field.type === 'dimension' ? (

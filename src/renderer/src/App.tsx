@@ -11,7 +11,7 @@ function App(): React.JSX.Element {
   return (
     <div className="flex h-full w-full overflow-hidden bg-macos-bg dark">
       {/* Sidebar - Left panel (Dimensions & Measures) */}
-      <Sidebar fields={[]} />
+      <Sidebar />
 
       {/* Main content */}
       <div className="flex-1 flex flex-col overflow-hidden">
