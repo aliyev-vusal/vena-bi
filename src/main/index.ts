@@ -40,7 +40,7 @@ function buildMacOSMenu(): void {
     {
       label: app.name,
       submenu: [
-        { role: 'about', label: 'VENA BI Hakkında' },
+        { role: 'about', label: 'About VENA BI' },
         { type: 'separator' },
         { role: 'services' },
         { type: 'separator' },
@@ -52,32 +52,32 @@ function buildMacOSMenu(): void {
       ]
     },
     {
-      label: 'Dosya',
+      label: 'File',
       submenu: [
         {
-          label: 'CSV / Parquet Aç...',
+          label: 'Open CSV / Parquet...',
           accelerator: 'CmdOrCtrl+O'
         },
         { type: 'separator' },
-        { role: 'close', label: 'Kapat' }
+        { role: 'close', label: 'Close' }
       ]
     },
     {
-      label: 'Görünüm',
+      label: 'View',
       submenu: [
-        { role: 'reload', label: 'Yenile' },
-        { role: 'toggleDevTools', label: 'Geliştirici Araçları' },
+        { role: 'reload', label: 'Reload' },
+        { role: 'toggleDevTools', label: 'Developer Tools' },
         { type: 'separator' },
-        { role: 'togglefullscreen', label: 'Tam Ekran' }
+        { role: 'togglefullscreen', label: 'Full Screen' }
       ]
     },
     {
-      label: 'Pencere',
+      label: 'Window',
       submenu: [
-        { role: 'minimize', label: 'Simge Durumuna Küçült' },
-        { role: 'zoom', label: 'Yaklaştır' },
+        { role: 'minimize', label: 'Minimize' },
+        { role: 'zoom', label: 'Zoom' },
         { type: 'separator' },
-        { role: 'front', label: 'Öne Getir' }
+        { role: 'front', label: 'Bring All to Front' }
       ]
     }
   ]

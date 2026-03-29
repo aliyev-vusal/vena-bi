@@ -11,12 +11,12 @@ interface SidebarProps {
 }
 
 const mockFields: Field[] = [
-  { name: 'Tarih', type: 'dimension', dataType: 'DATE' },
-  { name: 'Ülke', type: 'dimension', dataType: 'VARCHAR' },
-  { name: 'Kategori', type: 'dimension', dataType: 'VARCHAR' },
-  { name: 'Satış', type: 'measure', dataType: 'DOUBLE' },
-  { name: 'Adet', type: 'measure', dataType: 'INTEGER' },
-  { name: 'Kâr', type: 'measure', dataType: 'DOUBLE' }
+  { name: 'Date', type: 'dimension', dataType: 'DATE' },
+  { name: 'Country', type: 'dimension', dataType: 'VARCHAR' },
+  { name: 'Category', type: 'dimension', dataType: 'VARCHAR' },
+  { name: 'Sales', type: 'measure', dataType: 'DOUBLE' },
+  { name: 'Quantity', type: 'measure', dataType: 'INTEGER' },
+  { name: 'Profit', type: 'measure', dataType: 'DOUBLE' }
 ]
 
 export function Sidebar({ fields = mockFields }: SidebarProps): React.JSX.Element {
@@ -31,7 +31,7 @@ export function Sidebar({ fields = mockFields }: SidebarProps): React.JSX.Elemen
       {/* Data source header */}
       <div className="px-4 py-3 border-b border-macos-border">
         <p className="text-xs font-semibold text-macos-text-secondary uppercase tracking-wider mb-2">
-          Veri Kaynağı
+          Data Source
         </p>
         <button className="no-drag w-full flex items-center gap-2 px-3 py-2 rounded-macos-sm bg-macos-border hover:bg-opacity-80 text-macos-text text-sm transition-colors">
           <svg
@@ -47,7 +47,7 @@ export function Sidebar({ fields = mockFields }: SidebarProps): React.JSX.Elemen
               d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
             />
           </svg>
-          Dosya Yükle
+          Load File
         </button>
       </div>
 
@@ -56,7 +56,7 @@ export function Sidebar({ fields = mockFields }: SidebarProps): React.JSX.Elemen
         {/* Dimensions */}
         <div className="mb-4">
           <p className="px-2 mb-1 text-xs font-semibold text-macos-text-secondary uppercase tracking-wider">
-            Boyutlar
+            Dimensions
           </p>
           {dimensions.map((field) => (
             <FieldItem key={field.name} field={field} />
@@ -66,7 +66,7 @@ export function Sidebar({ fields = mockFields }: SidebarProps): React.JSX.Elemen
         {/* Measures */}
         <div>
           <p className="px-2 mb-1 text-xs font-semibold text-macos-text-secondary uppercase tracking-wider">
-            Ölçümler
+            Measures
           </p>
           {measures.map((field) => (
             <FieldItem key={field.name} field={field} />

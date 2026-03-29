@@ -24,7 +24,7 @@ export function Canvas({ activeChart }: CanvasProps): React.JSX.Element {
     e.preventDefault()
     setIsDragOver(null)
     // TODO: read field name from drag data in Step 3
-    const fieldName = e.dataTransfer.getData('text/plain') || 'Alan'
+    const fieldName = e.dataTransfer.getData('text/plain') || 'Field'
     setDroppedFields((prev) => {
       const filtered = prev.filter((f) => f.role !== role)
       return [...filtered, { name: fieldName, role }]
@@ -40,7 +40,7 @@ export function Canvas({ activeChart }: CanvasProps): React.JSX.Element {
       {/* Drop zones */}
       <div className="flex gap-3 p-4 shrink-0">
         <DropZone
-          label="X Ekseni"
+          label="X Axis"
           value={xField?.name}
           role="x"
           isDragOver={isDragOver === 'x'}
@@ -49,7 +49,7 @@ export function Canvas({ activeChart }: CanvasProps): React.JSX.Element {
           onDrop={(e) => handleDrop(e, 'x')}
         />
         <DropZone
-          label="Y Ekseni (Ölçüm)"
+          label="Y Axis (Measure)"
           value={yField?.name}
           role="y"
           isDragOver={isDragOver === 'y'}
@@ -106,7 +106,7 @@ function DropZone({
           {value}
         </span>
       ) : (
-        <span>{label} için sürükleyin</span>
+        <span>Drop field for {label}</span>
       )}
     </div>
   )
@@ -123,8 +123,8 @@ function EmptyState(): React.JSX.Element {
           d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
         />
       </svg>
-      <p className="text-sm">Sol panelden alanları sürükleyin</p>
-      <p className="text-xs opacity-60">X ve Y eksenlerini doldurunca grafik oluşacak</p>
+      <p className="text-sm">Drag fields from the left panel</p>
+      <p className="text-xs opacity-60">Chart will appear once X and Y axes are filled</p>
     </div>
   )
 }
@@ -161,7 +161,7 @@ function ChartPlaceholder({
       </div>
 
       <p className="text-center text-xs text-macos-text-secondary">
-        Adım 3'te gerçek grafik entegre edilecek (Recharts / ECharts)
+        Real chart will be integrated in Step 3 (Recharts / ECharts)
       </p>
     </div>
   )

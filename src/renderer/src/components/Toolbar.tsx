@@ -10,7 +10,7 @@ interface ToolbarProps {
 const chartTypes: { type: ChartType; label: string; icon: React.ReactNode }[] = [
   {
     type: 'bar',
-    label: 'Çubuk',
+    label: 'Bar',
     icon: (
       <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
         <rect x="3" y="12" width="4" height="9" rx="1" />
@@ -21,7 +21,7 @@ const chartTypes: { type: ChartType; label: string; icon: React.ReactNode }[] = 
   },
   {
     type: 'line',
-    label: 'Çizgi',
+    label: 'Line',
     icon: (
       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <polyline points="3,17 8,10 13,13 21,5" strokeWidth={2} strokeLinecap="round" />
@@ -30,7 +30,7 @@ const chartTypes: { type: ChartType; label: string; icon: React.ReactNode }[] = 
   },
   {
     type: 'pie',
-    label: 'Pasta',
+    label: 'Pie',
     icon: (
       <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
         <path d="M12 2a10 10 0 0 1 10 10H12V2z" />
@@ -41,7 +41,7 @@ const chartTypes: { type: ChartType; label: string; icon: React.ReactNode }[] = 
   },
   {
     type: 'scatter',
-    label: 'Nokta',
+    label: 'Scatter',
     icon: (
       <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
         <circle cx="6" cy="18" r="2" />
@@ -53,7 +53,7 @@ const chartTypes: { type: ChartType; label: string; icon: React.ReactNode }[] = 
   },
   {
     type: 'table',
-    label: 'Tablo',
+    label: 'Table',
     icon: (
       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <rect x="3" y="3" width="18" height="18" rx="2" strokeWidth={2} />
@@ -97,7 +97,7 @@ export function Toolbar({ activeChart, onChartChange }: ToolbarProps): React.JSX
       {/* Action buttons */}
       <div className="no-drag flex items-center gap-2">
         <button className="px-3 py-1.5 rounded-macos-sm bg-macos-accent hover:bg-blue-500 text-white text-xs font-medium transition-colors">
-          Yenile
+          Refresh
         </button>
       </div>
     </header>
