@@ -1,4 +1,6 @@
 import React from 'react'
+import { useDraggable } from '@dnd-kit/core'
+import { CSS } from '@dnd-kit/utilities'
 
 interface Field {
   name: string
@@ -15,9 +17,10 @@ interface SidebarProps {
   width: number
   fields: Field[]
   dataSource: DataSource | null
+  onClearDataSource: () => void
 }
 
-export function Sidebar({ width, fields, dataSource }: SidebarProps): React.JSX.Element {
+export function Sidebar({ width, fields, dataSource, onClearDataSource }: SidebarProps): React.JSX.Element {
   const dimensions = fields.filter((f) => f.type === 'dimension')
   const measures = fields.filter((f) => f.type === 'measure')
   const fileName = dataSource
@@ -39,13 +42,24 @@ export function Sidebar({ width, fields, dataSource }: SidebarProps): React.JSX.
         </p>
 
         {dataSource ? (
-          <div className="px-3 py-2 rounded-macos-sm bg-macos-border">
-            <p className="text-xs font-medium text-macos-text truncate" title={dataSource.filePath}>
-              {fileName}
-            </p>
-            <p className="text-[10px] text-macos-text-secondary mt-0.5">
-              {dataSource.rowCount.toLocaleString()} rows · {fields.length} columns
-            </p>
+          <div className="px-3 py-2 rounded-macos-sm bg-macos-border flex items-start gap-2">
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-medium text-macos-text truncate" title={dataSource.filePath}>
+                {fileName}
+              </p>
+              <p className="text-[10px] text-macos-text-secondary mt-0.5">
+                {dataSource.rowCount.toLocaleString()} rows · {fields.length} columns
+              </p>
+            </div>
+            <button
+              onClick={onClearDataSource}
+              title="Remove data source"
+              className="shrink-0 mt-0.5 text-macos-text-secondary hover:text-red-400 transition-colors"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+            </button>
           </div>
         ) : (
           <p className="px-1 text-[11px] text-macos-text-secondary opacity-60">
@@ -99,17 +113,25 @@ function FieldGroup({ label, fields }: { label: string; fields: Field[] }): Reac
 }
 
 function FieldItem({ field }: { field: Field }): React.JSX.Element {
-  const handleDragStart = (e: React.DragEvent): void => {
-    e.dataTransfer.setData('text/plain', field.name)
-    e.dataTransfer.effectAllowed = 'copy'
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+    id: field.name,
+    data: { field }
+  })
+
+  const style: React.CSSProperties = {
+    transform: CSS.Translate.toString(transform),
+    opacity: isDragging ? 0.4 : undefined,
+    zIndex: isDragging ? 9999 : undefined
   }
 
   const isDimension = field.type === 'dimension'
 
   return (
     <div
-      draggable
-      onDragStart={handleDragStart}
+      ref={setNodeRef}
+      style={style}
+      {...listeners}
+      {...attributes}
       className="no-drag group flex items-center gap-2 px-2 py-1.5 rounded-macos-sm hover:bg-macos-border cursor-grab active:cursor-grabbing text-sm text-macos-text transition-colors"
     >
       <span

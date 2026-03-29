@@ -10,6 +10,10 @@ export type LoadFileResult =
   | { success: true; fields: Field[]; rowCount: number; filePath: string }
   | { success: false; error: string; canceled?: boolean }
 
+export type QueryChartResult =
+  | { success: true; data: { x: unknown; value: number }[] }
+  | { success: false; error: string }
+
 // DuckDB numeric types → measure; everything else → dimension
 const NUMERIC_PREFIXES = [
   'INTEGER', 'BIGINT', 'HUGEINT', 'UBIGINT', 'UINTEGER',
@@ -70,6 +74,25 @@ class DataService {
           })
         }
       )
+    })
+  }
+
+  queryChart(xColumn: string, yColumn: string): Promise<QueryChartResult> {
+    const safeX = xColumn.replace(/"/g, '""')
+    const safeY = yColumn.replace(/"/g, '""')
+    const sql = `SELECT "${safeX}", SUM("${safeY}") AS value FROM current_table GROUP BY "${safeX}" ORDER BY "${safeX}" LIMIT 500`
+    return new Promise((resolve) => {
+      this.conn.all(sql, (err, rows) => {
+        if (err) {
+          resolve({ success: false, error: err.message })
+          return
+        }
+        const data = (rows as Record<string, unknown>[]).map((row) => ({
+          x: row[xColumn],
+          value: Number(row['value'])
+        }))
+        resolve({ success: true, data })
+      })
     })
   }
 }

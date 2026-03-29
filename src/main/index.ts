@@ -104,6 +104,10 @@ function registerIpcHandlers(): void {
 
     return dataService.loadFile(filePaths[0])
   })
+
+  ipcMain.handle('query-chart', async (_event, xColumn: string, yColumn: string) => {
+    return dataService.queryChart(xColumn, yColumn)
+  })
 }
 
 app.whenReady().then(() => {
