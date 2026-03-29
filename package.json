@@ -7,10 +7,13 @@
     "dev": "electron-vite dev",
     "build": "electron-vite build",
     "preview": "electron-vite preview",
-    "start": "electron-vite dev"
+    "start": "electron-vite dev",
+    "rebuild": "electron-rebuild -f -w duckdb",
+    "postinstall": "electron-rebuild -f -w duckdb"
   },
   "devDependencies": {
     "@electron-toolkit/tsconfig": "^1.0.1",
+    "@electron/rebuild": "^4.0.3",
     "@types/react": "^18.2.55",
     "@types/react-dom": "^18.2.19",
     "@vitejs/plugin-react": "^4.2.1",
@@ -25,6 +28,7 @@
   "dependencies": {
     "@electron-toolkit/preload": "^3.0.0",
     "@electron-toolkit/utils": "^3.0.0",
+    "duckdb": "^1.4.4",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   }

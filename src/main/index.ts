@@ -1,6 +1,7 @@
-import { app, shell, BrowserWindow, Menu } from 'electron'
+import { app, shell, BrowserWindow, Menu, ipcMain, dialog } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
+import { dataService } from './dataService'
 
 function createWindow(): void {
   const mainWindow = new BrowserWindow({
@@ -9,10 +10,10 @@ function createWindow(): void {
     minWidth: 900,
     minHeight: 600,
     show: false,
-    titleBarStyle: 'hiddenInset', // macOS traffic lights + inset title
+    titleBarStyle: 'hiddenInset',
     trafficLightPosition: { x: 16, y: 16 },
     backgroundColor: '#1e1e1e',
-    vibrancy: 'sidebar', // macOS frosted glass effect on sidebar
+    vibrancy: 'sidebar',
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
       sandbox: false
@@ -55,8 +56,11 @@ function buildMacOSMenu(): void {
       label: 'File',
       submenu: [
         {
-          label: 'Open CSV / Parquet...',
-          accelerator: 'CmdOrCtrl+O'
+          label: 'Open CSV / Parquet…',
+          accelerator: 'CmdOrCtrl+O',
+          click: () => {
+            BrowserWindow.getFocusedWindow()?.webContents.send('menu-open-file')
+          }
         },
         { type: 'separator' },
         { role: 'close', label: 'Close' }
@@ -86,6 +90,22 @@ function buildMacOSMenu(): void {
   Menu.setApplicationMenu(menu)
 }
 
+function registerIpcHandlers(): void {
+  ipcMain.handle('open-file', async () => {
+    const { canceled, filePaths } = await dialog.showOpenDialog({
+      title: 'Open Data File',
+      properties: ['openFile'],
+      filters: [{ name: 'Data Files', extensions: ['csv', 'parquet'] }]
+    })
+
+    if (canceled || filePaths.length === 0) {
+      return { success: false, canceled: true }
+    }
+
+    return dataService.loadFile(filePaths[0])
+  })
+}
+
 app.whenReady().then(() => {
   electronApp.setAppUserModelId('com.vena-bi')
 
@@ -93,6 +113,7 @@ app.whenReady().then(() => {
     optimizer.watchWindowShortcuts(window)
   })
 
+  registerIpcHandlers()
   buildMacOSMenu()
   createWindow()
 

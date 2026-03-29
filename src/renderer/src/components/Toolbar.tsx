@@ -2,9 +2,17 @@ import React from 'react'
 
 type ChartType = 'bar' | 'line' | 'pie' | 'scatter' | 'table'
 
+interface DataSource {
+  filePath: string
+  rowCount: number
+}
+
 interface ToolbarProps {
   activeChart: ChartType
   onChartChange: (type: ChartType) => void
+  onOpenFile: () => void
+  isLoading: boolean
+  dataSource: DataSource | null
 }
 
 const chartTypes: { type: ChartType; label: string; icon: React.ReactNode }[] = [
@@ -65,15 +73,25 @@ const chartTypes: { type: ChartType; label: string; icon: React.ReactNode }[] = 
   }
 ]
 
-export function Toolbar({ activeChart, onChartChange }: ToolbarProps): React.JSX.Element {
+export function Toolbar({
+  activeChart,
+  onChartChange,
+  onOpenFile,
+  isLoading,
+  dataSource
+}: ToolbarProps): React.JSX.Element {
+  const fileName = dataSource
+    ? dataSource.filePath.split('/').pop() ?? dataSource.filePath
+    : null
+
   return (
     <header className="h-11 bg-macos-toolbar border-b border-macos-border flex items-center px-4 gap-3 shrink-0 drag-region">
-      {/* Left — app title (drag region) */}
+      {/* Left — title */}
       <div className="flex items-center gap-2 w-40 shrink-0">
         <span className="text-sm font-semibold text-macos-text tracking-tight">VENA BI</span>
       </div>
 
-      {/* Center — chart type pill selector */}
+      {/* Center — chart type selector */}
       <div className="flex-1 flex justify-center">
         <div className="no-drag flex items-center gap-0.5 bg-macos-surface border border-macos-border rounded-macos-sm p-0.5">
           {chartTypes.map(({ type, label, icon }) => (
@@ -94,16 +112,32 @@ export function Toolbar({ activeChart, onChartChange }: ToolbarProps): React.JSX
         </div>
       </div>
 
-      {/* Right — Open File button */}
+      {/* Right — file info + Open File button */}
       <div className="no-drag flex items-center gap-2 w-40 justify-end shrink-0">
+        {fileName && (
+          <span
+            className="text-[10px] text-macos-text-secondary truncate max-w-[80px]"
+            title={dataSource?.filePath}
+          >
+            {fileName}
+          </span>
+        )}
         <button
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-macos-sm bg-macos-accent hover:bg-blue-500 active:scale-[0.97] text-white text-[11px] font-medium transition-all"
-          onClick={() => window.electron?.ipcRenderer.send('open-file')}
+          onClick={onOpenFile}
+          disabled={isLoading}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-macos-sm bg-macos-accent hover:bg-blue-500 active:scale-[0.97] disabled:opacity-50 text-white text-[11px] font-medium transition-all shrink-0"
         >
-          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 19a2 2 0 01-2-2V7a2 2 0 012-2h4l2 2h4a2 2 0 012 2v1M5 19h14a2 2 0 002-2v-5a2 2 0 00-2-2H9a2 2 0 00-2 2v5a2 2 0 01-2 2z" />
-          </svg>
-          Open File
+          {isLoading ? (
+            <svg className="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth={3} />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+            </svg>
+          ) : (
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 19a2 2 0 01-2-2V7a2 2 0 012-2h4l2 2h4a2 2 0 012 2v1M5 19h14a2 2 0 002-2v-5a2 2 0 00-2-2H9a2 2 0 00-2 2v5a2 2 0 01-2 2z" />
+            </svg>
+          )}
+          {isLoading ? 'Loading…' : 'Open File'}
         </button>
       </div>
     </header>

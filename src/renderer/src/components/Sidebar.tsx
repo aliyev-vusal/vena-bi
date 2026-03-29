@@ -6,54 +6,81 @@ interface Field {
   dataType: string
 }
 
-interface SidebarProps {
-  fields?: Field[]
-  width: number
+interface DataSource {
+  filePath: string
+  rowCount: number
 }
 
-const mockFields: Field[] = [
-  { name: 'Date', type: 'dimension', dataType: 'DATE' },
-  { name: 'Country', type: 'dimension', dataType: 'VARCHAR' },
-  { name: 'Category', type: 'dimension', dataType: 'VARCHAR' },
-  { name: 'Sales', type: 'measure', dataType: 'DOUBLE' },
-  { name: 'Quantity', type: 'measure', dataType: 'INTEGER' },
-  { name: 'Profit', type: 'measure', dataType: 'DOUBLE' }
-]
+interface SidebarProps {
+  width: number
+  fields: Field[]
+  dataSource: DataSource | null
+}
 
-export function Sidebar({ fields = mockFields, width }: SidebarProps): React.JSX.Element {
+export function Sidebar({ width, fields, dataSource }: SidebarProps): React.JSX.Element {
   const dimensions = fields.filter((f) => f.type === 'dimension')
   const measures = fields.filter((f) => f.type === 'measure')
+  const fileName = dataSource
+    ? dataSource.filePath.split('/').pop() ?? dataSource.filePath
+    : null
 
   return (
     <aside
       style={{ width }}
       className="shrink-0 bg-macos-sidebar flex flex-col select-none overflow-hidden"
     >
-      {/* Traffic light spacer — macOS title bar area */}
+      {/* Traffic light spacer */}
       <div className="h-10 drag-region" />
 
-      {/* Data source header */}
+      {/* Data source info */}
       <div className="px-3 pb-3 border-b border-macos-border">
         <p className="text-[10px] font-semibold text-macos-text-secondary uppercase tracking-widest mb-2 px-1">
           Data Source
         </p>
-        <button
-          className="no-drag w-full flex items-center gap-2 px-3 py-2 rounded-macos-sm bg-macos-border hover:bg-opacity-70 active:scale-[0.98] text-macos-text text-xs font-medium transition-all"
-          onClick={() => window.electron?.ipcRenderer.send('open-file')}
-        >
-          <svg className="w-3.5 h-3.5 text-macos-accent shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-          </svg>
-          <span className="truncate">Open CSV / Parquet…</span>
-        </button>
+
+        {dataSource ? (
+          <div className="px-3 py-2 rounded-macos-sm bg-macos-border">
+            <p className="text-xs font-medium text-macos-text truncate" title={dataSource.filePath}>
+              {fileName}
+            </p>
+            <p className="text-[10px] text-macos-text-secondary mt-0.5">
+              {dataSource.rowCount.toLocaleString()} rows · {fields.length} columns
+            </p>
+          </div>
+        ) : (
+          <p className="px-1 text-[11px] text-macos-text-secondary opacity-60">
+            No file loaded. Use <span className="font-medium text-macos-text">Open File</span> or{' '}
+            <span className="font-mono text-[10px] bg-macos-border px-1 py-0.5 rounded">⌘O</span>
+          </p>
+        )}
       </div>
 
       {/* Fields list */}
       <div className="flex-1 overflow-y-auto px-2 py-3 space-y-4">
-        <FieldGroup label="Dimensions" fields={dimensions} />
-        <FieldGroup label="Measures" fields={measures} />
+        {fields.length === 0 ? (
+          <EmptyFields />
+        ) : (
+          <>
+            <FieldGroup label="Dimensions" fields={dimensions} />
+            <FieldGroup label="Measures" fields={measures} />
+          </>
+        )}
       </div>
     </aside>
+  )
+}
+
+function EmptyFields(): React.JSX.Element {
+  return (
+    <div className="flex flex-col items-center gap-2 py-8 text-macos-text-secondary opacity-40">
+      <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
+          d="M3 10h18M3 14h18M10 3v18M14 3v18" />
+      </svg>
+      <p className="text-[11px] text-center leading-relaxed">
+        Open a CSV or<br />Parquet file to start
+      </p>
+    </div>
   )
 }
 
@@ -85,20 +112,17 @@ function FieldItem({ field }: { field: Field }): React.JSX.Element {
       onDragStart={handleDragStart}
       className="no-drag group flex items-center gap-2 px-2 py-1.5 rounded-macos-sm hover:bg-macos-border cursor-grab active:cursor-grabbing text-sm text-macos-text transition-colors"
     >
-      {/* Type badge */}
       <span
         className={`w-4 h-4 rounded flex items-center justify-center text-[9px] font-bold shrink-0 ${
           isDimension
-            ? 'bg-blue-500 bg-opacity-20 text-blue-400'
-            : 'bg-green-500 bg-opacity-20 text-green-400'
+            ? 'bg-blue-500/20 text-blue-400'
+            : 'bg-green-500/20 text-green-400'
         }`}
       >
         {isDimension ? 'D' : 'M'}
       </span>
-
       <span className="flex-1 truncate text-xs">{field.name}</span>
-
-      <span className="text-macos-text-secondary text-[10px] font-mono opacity-0 group-hover:opacity-60 transition-opacity shrink-0">
+      <span className="text-macos-text-secondary text-[10px] font-mono opacity-0 group-hover:opacity-50 transition-opacity shrink-0">
         {field.dataType}
       </span>
     </div>
