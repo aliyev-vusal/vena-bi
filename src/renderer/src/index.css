@@ -46,6 +46,10 @@
   }
 }
 
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
 @layer utilities {
   /* macOS traffic light drag region */
   .drag-region {

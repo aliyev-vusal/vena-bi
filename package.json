@@ -30,6 +30,7 @@
     "@dnd-kit/utilities": "^3.2.2",
     "@electron-toolkit/preload": "^3.0.0",
     "@electron-toolkit/utils": "^3.0.0",
+    "@xyflow/react": "^12.10.2",
     "duckdb": "^1.4.4",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",

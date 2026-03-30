@@ -1,150 +1,167 @@
-import React, { useState, useRef, useCallback, useEffect } from 'react'
-import { DndContext, DragEndEvent, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
-import { Sidebar } from './components/Sidebar'
-import { Toolbar } from './components/Toolbar'
-import { Canvas } from './components/Canvas'
+import React, { useState, useCallback, useEffect } from 'react'
+import { NavRail, type ViewType } from './components/NavRail'
+import { TableView } from './views/TableView'
+import { ModelView } from './views/ModelView'
+import { ReportView } from './views/ReportView'
 
-type ChartType = 'bar' | 'line' | 'pie' | 'scatter' | 'table'
-
-interface Field {
+export interface Field {
   name: string
   type: 'dimension' | 'measure'
   dataType: string
 }
 
-interface DataSource {
+export interface DataSource {
+  id: string
+  tableName: string
   filePath: string
+  fileName: string
   rowCount: number
+  fields: Field[]
 }
 
-const SIDEBAR_MIN = 180
-const SIDEBAR_MAX = 480
-const SIDEBAR_DEFAULT = 256
+export interface Measure {
+  id: string
+  name: string
+  expression: string
+}
+
+export interface Relationship {
+  id: string
+  fromTable: string
+  fromColumn: string
+  toTable: string
+  toColumn: string
+}
+
+export interface AxisField {
+  fieldName: string
+  tableName: string
+  isMeasure: boolean
+  measureExpression?: string
+  dataType?: string
+}
 
 function App(): React.JSX.Element {
-  const [activeChart, setActiveChart] = useState<ChartType>('bar')
-  const [sidebarWidth, setSidebarWidth] = useState(SIDEBAR_DEFAULT)
-  const [fields, setFields] = useState<Field[]>([])
-  const [dataSource, setDataSource] = useState<DataSource | null>(null)
+  const [activeView, setActiveView] = useState<ViewType>('report')
+  const [dataSources, setDataSources] = useState<DataSource[]>([])
+  const [activeSourceId, setActiveSourceId] = useState<string | null>(null)
+  const [measures, setMeasures] = useState<Measure[]>([])
+  const [relationships, setRelationships] = useState<Relationship[]>([])
   const [isLoading, setIsLoading] = useState(false)
-  const [loadError, setLoadError] = useState<string | null>(null)
-  const [xField, setXField] = useState<string | null>(null)
-  const [yField, setYField] = useState<string | null>(null)
-  const isResizing = useRef(false)
 
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 4 } })
-  )
-
-  const handleDragEnd = useCallback((event: DragEndEvent) => {
-    const { active, over } = event
-    if (!over) return
-    const fieldName = active.id as string
-    if (over.id === 'x-axis') setXField(fieldName)
-    else if (over.id === 'y-axis') setYField(fieldName)
+  useEffect(() => {
+    window.api.getMeasures().then(setMeasures)
+    window.api.getRelationships().then(setRelationships)
   }, [])
 
-  const clearField = useCallback((role: 'x' | 'y') => {
-    if (role === 'x') setXField(null)
-    else setYField(null)
+  const selectSource = useCallback((id: string) => {
+    setActiveSourceId(id)
   }, [])
 
-  const clearDataSource = useCallback(() => {
-    setDataSource(null)
-    setFields([])
-    setXField(null)
-    setYField(null)
-    setLoadError(null)
+  const removeSource = useCallback((id: string) => {
+    window.api.dropTable(id)
+    setDataSources((prev) => {
+      const next = prev.filter((s) => s.id !== id)
+      if (activeSourceId === id) {
+        setActiveSourceId(next[next.length - 1]?.id ?? null)
+      }
+      return next
+    })
+  }, [activeSourceId])
+
+  const updateSource = useCallback((updated: DataSource) => {
+    setDataSources((prev) => prev.map((s) => s.id === updated.id ? updated : s))
   }, [])
 
   const openFile = useCallback(async () => {
+    if (isLoading) return
     setIsLoading(true)
-    setLoadError(null)
     try {
       const result = await window.api.openFile()
       if (result.success) {
-        setFields(result.fields)
-        setDataSource({ filePath: result.filePath, rowCount: result.rowCount })
-        setXField(null)
-        setYField(null)
-      } else if (!result.canceled) {
-        setLoadError(result.error)
+        const source: DataSource = {
+          id: result.tableName,
+          tableName: result.tableName,
+          filePath: result.filePath,
+          fileName: result.filePath.split('/').pop() ?? result.filePath,
+          rowCount: result.rowCount,
+          fields: result.fields
+        }
+        setDataSources((prev) => [...prev, source])
+        setActiveSourceId(source.id)
       }
-    } catch (err) {
-      setLoadError(String(err))
     } finally {
       setIsLoading(false)
     }
+  }, [isLoading])
+
+  const addMeasure = useCallback(async (name: string, expression: string) => {
+    const m = await window.api.addMeasure({ name, expression })
+    setMeasures((prev) => [...prev, m])
   }, [])
 
-  // Listen for Cmd+O from the native menu
+  const removeMeasure = useCallback(async (id: string) => {
+    await window.api.removeMeasure(id)
+    setMeasures((prev) => prev.filter((m) => m.id !== id))
+  }, [])
+
+  const addRelationship = useCallback(async (rel: Omit<Relationship, 'id'>) => {
+    const r = await window.api.addRelationship(rel)
+    setRelationships((prev) => [...prev, r])
+  }, [])
+
+  const removeRelationship = useCallback(async (id: string) => {
+    await window.api.removeRelationship(id)
+    setRelationships((prev) => prev.filter((r) => r.id !== id))
+  }, [])
+
   useEffect(() => {
     const unsub = window.api.onMenuOpenFile(openFile)
     return unsub
   }, [openFile])
 
-  // Sidebar resize
-  const startResize = useCallback((e: React.MouseEvent) => {
-    e.preventDefault()
-    isResizing.current = true
-    document.body.style.cursor = 'col-resize'
-    document.body.style.userSelect = 'none'
-  }, [])
-
-  useEffect(() => {
-    const onMouseMove = (e: MouseEvent): void => {
-      if (!isResizing.current) return
-      setSidebarWidth(Math.min(Math.max(e.clientX, SIDEBAR_MIN), SIDEBAR_MAX))
-    }
-    const onMouseUp = (): void => {
-      if (!isResizing.current) return
-      isResizing.current = false
-      document.body.style.cursor = ''
-      document.body.style.userSelect = ''
-    }
-    window.addEventListener('mousemove', onMouseMove)
-    window.addEventListener('mouseup', onMouseUp)
-    return () => {
-      window.removeEventListener('mousemove', onMouseMove)
-      window.removeEventListener('mouseup', onMouseUp)
-    }
-  }, [])
-
   return (
-    <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
-      <div className="flex h-full w-full overflow-hidden bg-macos-bg dark">
-        <Sidebar width={sidebarWidth} fields={fields} dataSource={dataSource} onClearDataSource={clearDataSource} />
+    <div className="flex h-full w-full overflow-hidden bg-macos-bg dark">
+      {/* Left nav rail — always visible */}
+      <NavRail activeView={activeView} onViewChange={setActiveView} />
 
-        {/* Resize handle */}
-        <div
-          onMouseDown={startResize}
-          className="w-[4px] shrink-0 bg-macos-border hover:bg-macos-accent cursor-col-resize transition-colors duration-150"
+      {/* ── Report View ─────────────────────────────────────────── */}
+      {activeView === 'report' && (
+        <ReportView
+          dataSources={dataSources}
+          activeSourceId={activeSourceId}
+          measures={measures}
+          relationships={relationships}
+          onSelectSource={selectSource}
+          onRemoveSource={removeSource}
+          onAddSource={openFile}
+          onAddMeasure={addMeasure}
+          onRemoveMeasure={removeMeasure}
+          onAddRelationship={addRelationship}
+          onRemoveRelationship={removeRelationship}
+          onSourceUpdated={updateSource}
         />
+      )}
 
+      {/* ── Table View ──────────────────────────────────────────── */}
+      {activeView === 'table' && (
         <div className="flex-1 flex flex-col overflow-hidden min-w-0">
-          <Toolbar
-            activeChart={activeChart}
-            onChartChange={setActiveChart}
-            onOpenFile={openFile}
-            isLoading={isLoading}
-            dataSource={dataSource}
-          />
+          <TableView dataSources={dataSources} />
+        </div>
+      )}
 
-          {loadError && (
-            <div className="mx-4 mt-3 px-3 py-2 rounded-macos-sm bg-red-500/10 border border-red-500/30 text-red-400 text-xs shrink-0">
-              Failed to load file: {loadError}
-            </div>
-          )}
-
-          <Canvas
-            activeChart={activeChart}
-            xField={xField}
-            yField={yField}
-            onClearField={clearField}
+      {/* ── Model View ──────────────────────────────────────────── */}
+      {activeView === 'model' && (
+        <div className="flex-1 flex flex-col overflow-hidden min-w-0">
+          <ModelView
+            dataSources={dataSources}
+            relationships={relationships}
+            onAddRelationship={addRelationship}
+            onRemoveRelationship={removeRelationship}
           />
         </div>
-      </div>
-    </DndContext>
+      )}
+    </div>
   )
 }
 
